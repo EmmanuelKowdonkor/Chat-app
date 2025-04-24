@@ -150,6 +150,8 @@ def handle_disconnect():
     if username and username in connected_users:
         del connected_users[username]
 
+from flask import request
+
 @socketio.on('message')
 def handle_group_message(data):
     emit('message', data, broadcast=True)
@@ -158,10 +160,18 @@ def handle_group_message(data):
 def handle_private_message(data):
     recipient = data.get('to')
     sender = session.get('username')
-    if recipient and recipient in connected_users:
+    text = data.get('text')
+
+    if not sender or not recipient or not text:
+        return  # Skip if missing data
+
+    # Send to the recipient if connected
+    if recipient in connected_users:
         sid = connected_users[recipient]
-        emit('private_message', {'user': sender, 'text': data['text'], 'to': recipient}, room=sid)
-        emit('private_message', {'user': sender, 'text': data['text'], 'to': recipient}, room=socket_request.sid)
+        emit('private_message', {'user': sender, 'text': text, 'to': recipient}, room=sid)
+
+    # Also send back to sender
+    emit('private_message', {'user': sender, 'text': text, 'to': recipient}, room=request.sid)
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=10000)

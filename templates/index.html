@@ -170,20 +170,23 @@
     }
 
     function sendMessage() {
-      const input = document.getElementById("message");
-      const recipient = document.getElementById("recipient").value;
-      const msg = input.value.trim();
+  const input = document.getElementById("message");
+  const recipient = document.getElementById("recipient").value;
+  const msg = input.value.trim();
+
+  if (msg) {
+    if (recipient === "group") {
+      socket.emit("message", { user: username, text: msg });
+      // ❌ Don't append immediately — wait for server response
+    } else {
+      socket.emit("private_message", { to: recipient, text: msg });
+      appendMessage({ user: username, to: recipient, text: msg }, true); // ✅ only for private messages
     }
-      if (msg) {
-        if (recipient === "group") {
-  socket.emit("message", { user: username, text: msg });
-  // ❌ Don't append immediately — wait for server response
-} else {
-  socket.emit("private_message", { to: recipient, text: msg });
-  appendMessage({ user: username, to: recipient, text: msg }, true); // ✅ only for private messages
+    input.value = "";
+  }
 }
 
-    }
+  
 
     socket.on("message", function(data) {
       appendMessage(data, data.user === username);
