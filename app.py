@@ -156,6 +156,8 @@ from flask import request
 def handle_group_message(data):
     emit('message', data, broadcast=True)
 
+from flask import request
+
 @socketio.on('private_message')
 def handle_private_message(data):
     recipient = data.get('to')
@@ -163,15 +165,19 @@ def handle_private_message(data):
     text = data.get('text')
 
     if not sender or not recipient or not text:
-        return  # Skip if missing data
+        return  # Skip if missing fields
 
-    # Send to the recipient if connected
+    # Construct message once
+    message_data = {
+        'user': sender,
+        'text': text,
+        'to': recipient
+    }
+
+    # Send only to recipient if connected
     if recipient in connected_users:
-        sid = connected_users[recipient]
-        emit('private_message', {'user': sender, 'text': text, 'to': recipient}, room=sid)
+        emit('private_message', message_data, room=connected_users[recipient])
 
-    # Also send back to sender
-    emit('private_message', {'user': sender, 'text': text, 'to': recipient}, room=request.sid)
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=10000)
