@@ -71,6 +71,34 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/change_password', methods=['GET', 'POST'])
+def change_password():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        old_password = request.form['old_password']
+        new_password = request.form['new_password']
+        username = session['username']
+
+        conn = sqlite3.connect(DB)
+        c = conn.cursor()
+        c.execute("SELECT password FROM users WHERE username=?", (username,))
+        row = c.fetchone()
+
+        if row and check_password_hash(row[0], old_password):
+            new_hashed = generate_password_hash(new_password)
+            c.execute("UPDATE users SET password=? WHERE username=?", (new_hashed, username))
+            conn.commit()
+            conn.close()
+            return "✅ Password changed successfully! <a href='/chat'>Go back to chat</a>"
+        else:
+            conn.close()
+            return "❌ Incorrect old password. <a href='/change_password'>Try again</a>"
+
+    return render_template('change_password.html', username=session['username'])
+
+
 def get_all_usernames():
     conn = sqlite3.connect(DB)
     c = conn.cursor()

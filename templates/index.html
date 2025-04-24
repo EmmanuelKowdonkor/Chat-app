@@ -142,7 +142,7 @@
     <div class="header">
       <h2>Welcome, {{ username }}!</h2>
       <div class="dropdown-container">
-        <button class="dropdown-btn" onclick="toggleDropdown()">⬇️</button>
+        <button class="dropdown-btn" onclick="toggleDropdown()">👤</button>
         <div class="dropdown-list" id="userDropdown">
           <select id="recipient" onchange="toggleDropdown()">
             <option value="group" selected>Group Chat</option>
@@ -198,13 +198,21 @@
     });
 
     function appendMessage(data, isSender) {
-      const box = document.getElementById("chat-box");
-      const div = document.createElement("div");
-      div.classList.add("message", isSender ? "sent" : "received");
-      div.innerHTML = `<b>${data.user}</b>${data.text}`;
-      box.appendChild(div);
-      box.scrollTop = box.scrollHeight;
-    }
+  const box = document.getElementById("chat-box");
+  const div = document.createElement("div");
+  div.classList.add("message", isSender ? "sent" : "received");
+
+  // Show (direct message to ...) only when private
+  const directLabel = (isSender && data.to && data.to !== "group")
+    ? `<small style="color:gray;">(direct message to ${data.to})</small><br>`
+    : (data.to && data.to !== "group")
+      ? `<small style="color:gray;">(direct message from ${data.user})</small><br>`
+      : "";
+
+  div.innerHTML = `<b>${data.user}</b><br>${directLabel}${data.text}`;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
   </script>
 </body>
 </html>
