@@ -11,8 +11,10 @@
       margin: 0;
       padding: 0;
     }
+
     .container {
       max-width: 600px;
+      width: 95%;
       margin: auto;
       background-color: #ffffff;
       padding: 20px;
@@ -20,11 +22,15 @@
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
+
     h2 {
       color: #075e54;
+      font-size: clamp(15px, 6vw, 28px);
+
     }
+
     #chat-box {
-      height: 400px;
+      height: 50vh;
       overflow-y: auto;
       background-color: #f0f0f0;
       padding: 10px;
@@ -33,39 +39,52 @@
       display: flex;
       flex-direction: column;
     }
+
     .message {
-width: 150px;
-padding: 10px 15px;
-border-radius: 10px;
-margin: 5px 0;
-display: inline-block;
-word-wrap: break-word;
-font-size: 15px;
+      max-width: 70%;
+      padding: 10px 15px;
+      border-radius: 10px;
+      margin: 5px 0;
+      display: inline-block;
+      word-wrap: break-word;
+      font-size: clamp(9px, 3.5vw, 15px);
+
     }
+
     .sent {
       background-color: #dcf8c6;
       align-self: flex-end;
       text-align: right;
     }
+
     .received {
       background-color: #e5e5e5;
       align-self: flex-start;
       text-align: left;
     }
+
     .message b {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
-      font-size: 13px;
+      font-size: clamp(9px, 3vw, 13px);
       color: #555;
     }
+
+    .input-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
     input[type="text"] {
-      width: 75%;
+      flex: 1;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 25px;
-      margin-right: 10px;
+      min-width: 60%;
     }
+
     button {
       background-color: #25d366;
       color: white;
@@ -74,16 +93,34 @@ font-size: 15px;
       border-radius: 25px;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #128c7e;
     }
+
     .logout {
       margin-top: 15px;
       display: inline-block;
       background-color: #f44336;
     }
+
     .logout:hover {
       background-color: #d32f2f;
+    }
+
+    /* Responsive media queries */
+    @media (max-width: 600px) {
+      .message {
+        font-size: 4vw;
+      }
+
+      h2 {
+        font-size: 5vw;
+      }
+
+      .message b {
+        font-size: 3.5vw;
+      }
     }
   </style>
 </head>
@@ -92,10 +129,13 @@ font-size: 15px;
     <h2>Welcome, {{ username }}!</h2>
 
     <div id="chat-box"></div>
-    <input type="text" id="message" placeholder="Type your message...">
-    <button onclick="sendMessage()">Send</button>
 
-    <br><br>
+    <div class="input-area">
+      <input type="text" id="message" placeholder="Type your message...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <br>
     <a href="/logout"><button class="logout">Logout</button></a>
   </div>
 
