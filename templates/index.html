@@ -11,22 +11,59 @@
       margin: 0;
       padding: 0;
     }
-
     .container {
       max-width: 600px;
-      width: 95%;
-      margin: auto;
-      background-color: #ffffff;
-      padding: 20px;
-      margin-top: 50px;
+      margin: 40px auto;
+      background: #fff;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      overflow: hidden;
     }
 
-    h2 {
-      color: #075e54;
-      font-size: clamp(15px, 6vw, 28px);
+    .header {
+      background-color: #075e54;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
+    .header h2 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .dropdown-container {
+      position: relative;
+    }
+
+    .dropdown-btn {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .dropdown-list {
+      position: absolute;
+      top: 30px;
+      right: 0;
+      background: white;
+      color: black;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      display: none;
+      min-width: 160px;
+      z-index: 10;
+    }
+
+    .dropdown-list select {
+      width: 100%;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
     }
 
     #chat-box {
@@ -34,8 +71,6 @@
       overflow-y: auto;
       background-color: #f0f0f0;
       padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 10px;
       display: flex;
       flex-direction: column;
     }
@@ -44,11 +79,8 @@
       max-width: 70%;
       padding: 10px 15px;
       border-radius: 10px;
-      margin: 5px 0;
-      display: inline-block;
-      word-wrap: break-word;
-      font-size: clamp(9px, 3.5vw, 15px);
-
+      margin: 5px 10px;
+      font-size: 15px;
     }
 
     .sent {
@@ -67,23 +99,22 @@
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
-      font-size: clamp(9px, 3vw, 13px);
       color: #555;
     }
 
     .input-area {
       display: flex;
-      flex-wrap: wrap;
+      padding: 10px;
       gap: 10px;
+      border-top: 1px solid #ddd;
     }
 
     input[type="text"] {
       flex: 1;
-      font-size: 18px;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 25px;
-      min-width: 60%;
+      font-size: 16px;
     }
 
     button {
@@ -95,39 +126,33 @@
       cursor: pointer;
     }
 
-    button:hover {
-      background-color: #128c7e;
-    }
-
     .logout {
-      margin-top: 15px;
-      display: inline-block;
+      display: block;
+      margin: 15px auto;
       background-color: #f44336;
     }
 
     .logout:hover {
       background-color: #d32f2f;
     }
-
-    /* Responsive media queries */
-    @media (max-width: 600px) {
-      .message {
-        font-size: 4vw;
-      }
-
-      h2 {
-        font-size: 5vw;
-      }
-
-      .message b {
-        font-size: 3.5vw;
-      }
-    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Welcome, {{ username }}!</h2>
+    <div class="header">
+      <h2>Welcome, {{ username }}!</h2>
+      <div class="dropdown-container">
+        <button class="dropdown-btn" onclick="toggleDropdown()">👤</button>
+        <div class="dropdown-list" id="userDropdown">
+          <select id="recipient" onchange="toggleDropdown()">
+            <option value="group" selected>Group Chat</option>
+            {% for user in users %}
+              <option value="{{ user }}">{{ user }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
 
     <div id="chat-box"></div>
 
@@ -136,7 +161,6 @@
       <button onclick="sendMessage()">Send</button>
     </div>
 
-    <br>
     <a href="/logout"><button class="logout">Logout</button></a>
   </div>
 
@@ -145,27 +169,38 @@
     const socket = io();
     const username = "{{ username }}";
 
+    function toggleDropdown() {
+      const dropdown = document.getElementById("userDropdown");
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+
     function sendMessage() {
       const input = document.getElementById("message");
+      const recipient = document.getElementById("recipient").value;
       const msg = input.value.trim();
-      if (msg !== "") {
-        socket.emit("message", { user: username, text: msg });
+      if (msg) {
+        if (recipient === "group") {
+          socket.emit("message", { user: username, text: msg });
+        } else {
+          socket.emit("private_message", { to: recipient, text: msg });
+        }
         appendMessage({ user: username, text: msg }, true);
         input.value = "";
       }
     }
 
     socket.on("message", function(data) {
-      if (data.user !== username) {
-        appendMessage(data, false);
-      }
+      appendMessage(data, data.user === username);
+    });
+
+    socket.on("private_message", function(data) {
+      appendMessage(data, data.user === username);
     });
 
     function appendMessage(data, isSender) {
       const box = document.getElementById("chat-box");
       const div = document.createElement("div");
-      div.classList.add("message");
-      div.classList.add(isSender ? "sent" : "received");
+      div.classList.add("message", isSender ? "sent" : "received");
       div.innerHTML = `<b>${data.user}</b>${data.text}`;
       box.appendChild(div);
       box.scrollTop = box.scrollHeight;

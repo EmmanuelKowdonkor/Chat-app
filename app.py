@@ -1,6 +1,5 @@
-
 from flask import Flask, render_template, request, redirect, session, url_for
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, request as socket_request
 from werkzeug.security import generate_password_hash, check_password_hash
 import os, sqlite3
 
@@ -8,8 +7,8 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 socketio = SocketIO(app)
 
-# --- DATABASE SETUP ---
 DB = "users.db"
+users = {}  # username: sid
 
 def init_db():
     conn = sqlite3.connect(DB)
@@ -19,6 +18,21 @@ def init_db():
                   username TEXT UNIQUE NOT NULL,
                   password TEXT NOT NULL
               )""")
+    c.execute("""CREATE TABLE IF NOT EXISTS messages (
+                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  sender TEXT NOT NULL,
+                  receiver TEXT,
+                  content TEXT NOT NULL,
+                  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+              )""")
+    conn.commit()
+    conn.close()
+
+def save_message(sender, receiver, content):
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute("INSERT INTO messages (sender, receiver, content) VALUES (?, ?, ?)",
+              (sender, receiver, content))
     conn.commit()
     conn.close()
 
@@ -61,16 +75,46 @@ def register():
 def chat():
     if 'username' not in session:
         return redirect(url_for('login'))
-    return render_template('index.html', username=session['username'])
+
+    current_user = session['username']
+    other_users = [user for user in users.keys() if user != current_user]
+    return render_template('index.html', username=current_user, users=other_users)
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@socketio.on('connect')
+def handle_connect():
+    username = session.get('username')
+    if username:
+        users[username] = socket_request.sid
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    disconnected_sid = socket_request.sid
+    for user, sid in list(users.items()):
+        if sid == disconnected_sid:
+            del users[user]
+            break
+
 @socketio.on('message')
-def handle_message(data):
+def handle_group_message(data):
+    sender = data['user']
+    content = data['text']
+    save_message(sender, None, content)
     emit('message', data, broadcast=True)
+
+@socketio.on('private_message')
+def handle_private_message(data):
+    sender = session.get('username')
+    receiver = data.get('to')
+    content = data.get('text')
+    save_message(sender, receiver, content)
+    if receiver in users:
+        emit('private_message', {'user': sender, 'text': content}, room=users[receiver])
+    emit('private_message', {'user': sender, 'text': content}, room=socket_request.sid)
 
 @socketio.on('call')
 def handle_call(data):
@@ -88,6 +132,3 @@ def handle_ice(data):
 
 if __name__ == '__main__':
    socketio.run(app, host='0.0.0.0', port=10000)
-
-
-
