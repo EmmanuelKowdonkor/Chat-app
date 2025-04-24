@@ -14,13 +14,30 @@ connected_users = {}
 def init_db():
     conn = sqlite3.connect(DB)
     c = conn.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL
-    )""")
+
+    # Users table
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    """)
+
+    # Messages table for group + private messages
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL,
+            recipient TEXT NOT NULL,
+            content TEXT NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     conn.commit()
     conn.close()
+
 
 init_db()
 
@@ -56,15 +73,29 @@ def register():
         except sqlite3.IntegrityError:
             return "Username already taken. <a href='/register'>Try another</a>"
     return render_template('register.html')
-
 @app.route('/chat')
 def chat():
     if 'username' not in session:
         return redirect(url_for('login'))
+
     current_user = session['username']
     all_users = get_all_usernames()
     other_users = [u for u in all_users if u != current_user]
-    return render_template('index.html', username=current_user, users=other_users)
+
+    # 🔄 Load chat history (group + private messages)
+    conn = sqlite3.connect(DB)
+    c = conn.cursor()
+    c.execute("""
+        SELECT sender, recipient, content 
+        FROM messages 
+        WHERE recipient = 'group' OR recipient = ? OR sender = ?
+        ORDER BY timestamp ASC
+    """, (current_user, current_user))
+    history = [{"user": row[0], "to": row[1], "text": row[2]} for row in c.fetchall()]
+    conn.close()
+
+    return render_template('index.html', username=current_user, users=other_users, history=history)
+
 
 @app.route('/logout')
 def logout():

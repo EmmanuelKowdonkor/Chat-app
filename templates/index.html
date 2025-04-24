@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +20,6 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       overflow: hidden;
     }
-
     .header {
       background-color: #075e54;
       color: white;
@@ -28,16 +28,13 @@
       justify-content: space-between;
       align-items: center;
     }
-
     .header h2 {
       font-size: 20px;
       margin: 0;
     }
-
     .dropdown-container {
       position: relative;
     }
-
     .dropdown-btn {
       background: transparent;
       border: none;
@@ -45,7 +42,6 @@
       font-size: 20px;
       cursor: pointer;
     }
-
     .dropdown-list {
       position: absolute;
       top: 30px;
@@ -58,14 +54,12 @@
       min-width: 160px;
       z-index: 10;
     }
-
     .dropdown-list select {
       width: 100%;
       border: none;
       padding: 10px;
       border-radius: 6px;
     }
-
     #chat-box {
       height: 50vh;
       overflow-y: auto;
@@ -74,7 +68,6 @@
       display: flex;
       flex-direction: column;
     }
-
     .message {
       max-width: 70%;
       padding: 10px 15px;
@@ -82,33 +75,28 @@
       margin: 5px 10px;
       font-size: 15px;
     }
-
     .sent {
       background-color: #dcf8c6;
       align-self: flex-end;
       text-align: right;
     }
-
     .received {
       background-color: #e5e5e5;
       align-self: flex-start;
       text-align: left;
     }
-
     .message b {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
       color: #555;
     }
-
     .input-area {
       display: flex;
       padding: 10px;
       gap: 10px;
       border-top: 1px solid #ddd;
     }
-
     input[type="text"] {
       flex: 1;
       padding: 10px;
@@ -116,7 +104,6 @@
       border-radius: 25px;
       font-size: 16px;
     }
-
     button {
       background-color: #25d366;
       color: white;
@@ -125,13 +112,11 @@
       border-radius: 25px;
       cursor: pointer;
     }
-
     .logout {
       display: block;
       margin: 15px auto;
       background-color: #f44336;
     }
-
     .logout:hover {
       background-color: #d32f2f;
     }
@@ -142,7 +127,9 @@
     <div class="header">
       <h2>Welcome, {{ username }}!</h2>
       <div class="dropdown-container">
-        <button class="dropdown-btn" onclick="toggleDropdown()">👤</button>
+        <button class="dropdown-btn" onclick="toggleDropdown()">
+          <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="User" style="width: 32px; height: 32px; border-radius: 50%;">
+        </button>
         <div class="dropdown-list" id="userDropdown">
           <select id="recipient" onchange="toggleDropdown()">
             <option value="group" selected>Group Chat</option>
@@ -164,10 +151,18 @@
     <a href="/logout"><button class="logout">Logout</button></a>
   </div>
 
+  <script id="history-data" type="application/json">
+    {{ history | tojson }}
+  </script>
   <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
   <script>
     const socket = io();
     const username = "{{ username }}";
+
+    const messageHistory = JSON.parse(document.getElementById("history-data").textContent);
+    messageHistory.forEach(msg => {
+      appendMessage(msg, msg.user === username);
+    });
 
     function toggleDropdown() {
       const dropdown = document.getElementById("userDropdown");
@@ -184,7 +179,7 @@
         } else {
           socket.emit("private_message", { to: recipient, text: msg });
         }
-        appendMessage({ user: username, text: msg }, true);
+        appendMessage({ user: username, to: recipient, text: msg }, true);
         input.value = "";
       }
     }
@@ -198,21 +193,20 @@
     });
 
     function appendMessage(data, isSender) {
-  const box = document.getElementById("chat-box");
-  const div = document.createElement("div");
-  div.classList.add("message", isSender ? "sent" : "received");
+      const box = document.getElementById("chat-box");
+      const div = document.createElement("div");
+      div.classList.add("message", isSender ? "sent" : "received");
 
-  // Show (direct message to ...) only when private
-  const directLabel = (isSender && data.to && data.to !== "group")
-    ? `<small style="color:gray;">(direct message to ${data.to})</small><br>`
-    : (data.to && data.to !== "group")
-      ? `<small style="color:gray;">(direct message from ${data.user})</small><br>`
-      : "";
+      const directLabel = (data.to && data.to !== "group")
+        ? `<small style="color:gray;">(direct message to ${data.to})</small><br>`
+        : (data.to && data.to !== "group")
+          ? `<small style="color:gray;">(direct message from ${data.user})</small><br>`
+          : "";
 
-  div.innerHTML = `<b>${data.user}</b><br>${directLabel}${data.text}`;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
+      div.innerHTML = `<b>${data.user}</b><br>${directLabel}${data.text}`;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
   </script>
 </body>
 </html>
