@@ -702,15 +702,20 @@
         appendMessage(data, data.user === username);
       }
     });
-
-    function appendMessage(data, isSender) {
+  function appendMessage(data, isSender) {
       const box = document.getElementById("chat-box");
       const div = document.createElement("div");
-      div.classList.add("message", isSender ? "sent" : "received");
-      div.innerHTML = `<b>${data.user}</b><br>${data.text}`;
-      box.appendChild(div);
-      box.scrollTop = box.scrollHeight;
-    }
+  div.classList.add("message", isSender ? "sent" : "received");
+
+  if (data.missed_call) {
+    div.innerHTML = `<b>${data.user}</b><br><span style="color:#c62828;font-weight:600;">${data.text}</span>`;
+  } else {
+    div.innerHTML = `<b>${data.user}</b><br>${data.text}`;
+  }
+
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
 
     function generateCallId() {
       return "call_" + Date.now() + "_" + Math.floor(Math.random() * 100000);
@@ -1101,13 +1106,22 @@
       closeAllCallScreens();
       cleanupCall();
     }
+socket.on("call_ended", (data) => {
+  if (data.call_id !== currentCallId && !incomingCallData) return;
 
-    socket.on("call_ended", (data) => {
-      if (data.call_id !== currentCallId) return;
+  document.getElementById("incomingCallModal").style.display = "none";
+  document.getElementById("videoUpgradeModal").style.display = "none";
+
+  if (currentCallId === data.call_id) {
+    if (data.accepted) {
       alert(`Call ended by ${data.by}`);
-      closeAllCallScreens();
-      cleanupCall();
-    });
+    }
+    closeAllCallScreens();
+    cleanupCall();
+  }
+
+  incomingCallData = null;
+});
 
     function cleanupCall() {
       stopCallTimer();

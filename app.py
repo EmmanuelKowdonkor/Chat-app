@@ -257,7 +257,6 @@ def start_call(data):
         "call_type": call_type
     }, room=connected_users[callee])
 
-
 @socketio.on("accept_call")
 def accept_call(data):
     username = session.get("username")
@@ -272,6 +271,8 @@ def accept_call(data):
 
     if username != callee:
         return
+
+    call["accepted"] = True
 
     if caller in connected_users:
         emit("call_accepted", {
@@ -303,7 +304,7 @@ def reject_call(data):
         }, room=connected_users[caller])
 
     active_calls.pop(call_id, None)
-
+    
 
 @socketio.on("end_call")
 def end_call(data):
@@ -316,14 +317,34 @@ def end_call(data):
 
     caller = call["caller"]
     callee = call["callee"]
+    call_type = call["type"]
+    accepted = call.get("accepted", False)
 
     other = callee if username == caller else caller
 
+    # Notify the other side that the call ended
     if other in connected_users:
         emit("call_ended", {
             "call_id": call_id,
-            "by": username
+            "by": username,
+            "accepted": accepted
         }, room=connected_users[other])
+
+    # If caller ended before callee accepted, create missed call message for callee
+    if not accepted and username == caller:
+        missed_text = f"Missed {call_type} call from {caller}"
+
+        save_message(caller, callee, missed_text)
+
+        missed_message = {
+            "user": caller,
+            "text": missed_text,
+            "to": callee,
+            "missed_call": True
+        }
+
+        if callee in connected_users:
+            emit("private_message", missed_message, room=connected_users[callee])
 
     active_calls.pop(call_id, None)
 
