@@ -87,6 +87,71 @@
       object-fit: cover;
     }
 
+    .dropdown-btn {
+  position: relative;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.top-unread-badge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #25d366;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  border: 2px solid white;
+}
+
+.custom-user-list {
+  padding: 6px 0;
+  min-width: 220px;
+}
+
+.chat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.chat-item:hover {
+  background: #f3f3f3;
+}
+
+.active-chat {
+  background: #e8f5e9;
+  font-weight: 600;
+}
+
+.chat-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #25d366;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
     .dropdown-list {
       position: absolute;
       top: 42px;
@@ -505,18 +570,25 @@
         </div>
 
         <div class="dropdown-container">
-          <button class="dropdown-btn" onclick="toggleDropdown()">
-            <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="User">
-          </button>
-          <div class="dropdown-list" id="userDropdown">
-            <select id="recipient">
-              <option value="group" selected>Group Chat</option>
-              {% for user in users %}
-                <option value="{{ user }}">{{ user }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
+  <button class="dropdown-btn" onclick="toggleDropdown()">
+    <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="User">
+    <span id="topUnreadBadge" class="top-unread-badge" style="display:none;">0</span>
+  </button>
+
+  <div class="dropdown-list custom-user-list" id="userDropdown">
+    <div class="chat-item active-chat" data-chat="group" onclick="selectChat('group')">
+      <span>Group Chat</span>
+      <span class="chat-badge" id="badge-group" style="display:none;">0</span>
+    </div>
+
+    {% for user in users %}
+      <div class="chat-item" data-chat="{{ user }}" onclick="selectChat('{{ user }}')">
+        <span>{{ user }}</span>
+        <span class="chat-badge" id="badge-{{ user }}" style="display:none;">0</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
       </div>
     </div>
 
@@ -610,6 +682,7 @@
     const messageHistory = JSON.parse(document.getElementById("history-data").textContent);
 
     let currentChat = "group";
+    let unreadCounts = {}; 
 
     let currentCallId = null;
     let currentCallTarget = null;
@@ -667,12 +740,91 @@
         .forEach(msg => appendMessage(msg, msg.user === username));
     }
 
-    function switchChat() {
-      currentChat = document.getElementById("recipient").value;
-      document.getElementById("userDropdown").style.display = "none";
-      updateChatTitle();
-      renderChat();
+    
+
+    function getMessageChatKey(msg) {
+  if (msg.to === "group") {
+    return "group";
+  }
+
+  if (msg.user === username) {
+    return msg.to;
+  }
+
+  return msg.user;
+}
+
+function updateTopUnreadBadge() {
+  const badge = document.getElementById("topUnreadBadge");
+  const totalUnread = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+
+  if (totalUnread > 0) {
+    badge.style.display = "flex";
+    badge.textContent = totalUnread > 99 ? "99+" : totalUnread;
+  } else {
+    badge.style.display = "none";
+    badge.textContent = "0";
+  }
+}
+
+function updateChatBadge(chatKey) {
+  const badge = document.getElementById(`badge-${chatKey}`);
+  if (!badge) return;
+
+  const count = unreadCounts[chatKey] || 0;
+
+  if (count > 0) {
+    badge.style.display = "flex";
+    badge.textContent = count > 99 ? "99+" : count;
+  } else {
+    badge.style.display = "none";
+    badge.textContent = "0";
+  }
+}
+
+function updateAllBadges() {
+  updateTopUnreadBadge();
+
+  document.querySelectorAll(".chat-item").forEach(item => {
+    const chatKey = item.getAttribute("data-chat");
+    updateChatBadge(chatKey);
+  });
+}
+
+function markChatAsRead(chatKey) {
+  unreadCounts[chatKey] = 0;
+  updateChatBadge(chatKey);
+  updateTopUnreadBadge();
+}
+
+function maybeIncreaseUnread(msg) {
+  const chatKey = getMessageChatKey(msg);
+
+  if (chatKey !== currentChat && msg.user !== username) {
+    unreadCounts[chatKey] = (unreadCounts[chatKey] || 0) + 1;
+    updateChatBadge(chatKey);
+    updateTopUnreadBadge();
+  }
+}
+
+function updateActiveChatUI() {
+  document.querySelectorAll(".chat-item").forEach(item => {
+    item.classList.remove("active-chat");
+
+    if (item.getAttribute("data-chat") === currentChat) {
+      item.classList.add("active-chat");
     }
+  });
+}
+
+function selectChat(chatName) {
+  currentChat = chatName;
+  document.getElementById("userDropdown").style.display = "none";
+  markChatAsRead(chatName);
+  updateActiveChatUI();
+  updateChatTitle();
+  renderChat();
+}
 
     function sendMessage() {
       const input = document.getElementById("message");
@@ -690,18 +842,23 @@
     }
 
     socket.on("message", function(data) {
-      messageHistory.push(data);
-      if (isMessageForCurrentChat(data)) {
-        appendMessage(data, data.user === username);
-      }
-    });
+  messageHistory.push(data);
+  maybeIncreaseUnread(data);
 
-    socket.on("private_message", function(data) {
-      messageHistory.push(data);
-      if (isMessageForCurrentChat(data)) {
-        appendMessage(data, data.user === username);
-      }
-    });
+  if (isMessageForCurrentChat(data)) {
+    appendMessage(data, data.user === username);
+  }
+});
+
+socket.on("private_message", function(data) {
+  messageHistory.push(data);
+  maybeIncreaseUnread(data);
+
+  if (isMessageForCurrentChat(data)) {
+    appendMessage(data, data.user === username);
+  }
+});
+
   function appendMessage(data, isSender) {
       const box = document.getElementById("chat-box");
       const div = document.createElement("div");
@@ -1152,10 +1309,13 @@ socket.on("call_ended", (data) => {
       isCaller = false;
     }
 
-    document.getElementById("recipient").addEventListener("change", switchChat);
+    
 
-    updateChatTitle();
-    renderChat();
+   markChatAsRead("group");
+   updateActiveChatUI();
+   updateChatTitle();
+   renderChat();
+   updateAllBadges();
 
     window.onclick = function(event) {
       const userDropdown = document.getElementById("userDropdown");
