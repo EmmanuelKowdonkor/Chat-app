@@ -4,15 +4,82 @@
     <meta charset="UTF-8">
     <title>Login</title>
     <style>
-        body { font-family: sans-serif; background: #e5ddd5; text-align: center; padding-top: 100px; }
-        form { background: white; padding: 20px; display: inline-block; border-radius: 10px; }
-        input { padding: 10px; font-size: 16px; margin-bottom: 10px; width: 90%; }
-        button { padding: 10px 20px; background: #25d366; color: white; border: none; border-radius: 5px; }
-        a { color: #075e54; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        body {
+            font-family: sans-serif;
+            background: #e5ddd5;
+            text-align: center;
+            padding-top: 80px;
+        }
+
+        .app-brand {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .app-brand img {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+
+        .app-brand h1 {
+            margin: 0;
+            color: #075e54;
+            font-size: 28px;
+        }
+
+        form {
+            background: white;
+            padding: 25px;
+            display: inline-block;
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+        }
+
+        input {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+            width: 90%;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #25d366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        a {
+            color: #075e54;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .subtitle {
+            margin-top: -10px;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
+    <div class="app-brand">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="App Logo">
+        <h1>ChatConnect</h1>
+    </div>
+    <div class="subtitle">Login to continue chatting</div>
+
     <form method="POST">
         <h2>Login</h2>
         <input type="text" name="username" placeholder="Username" required /><br>

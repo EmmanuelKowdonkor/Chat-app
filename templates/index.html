@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,14 +11,16 @@
       margin: 0;
       padding: 0;
     }
+
     .container {
-      max-width: 600px;
+      max-width: 700px;
       margin: 40px auto;
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       overflow: hidden;
     }
+
     .header {
       background-color: #075e54;
       color: white;
@@ -27,39 +28,147 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 15px;
     }
-    .header h2 {
-      font-size: 20px;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-left img.logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: white;
+      padding: 2px;
+    }
+
+    .header-left h2 {
+      font-size: 18px;
       margin: 0;
+      line-height: 1.2;
     }
+
+    .header-left small {
+      display: block;
+      color: #d9fdd3;
+      margin-top: 2px;
+      font-size: 12px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+
     .dropdown-container {
       position: relative;
     }
+
     .dropdown-btn {
       background: transparent;
       border: none;
       color: white;
       font-size: 20px;
       cursor: pointer;
+      padding: 0;
     }
+
+    .dropdown-btn img {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
     .dropdown-list {
       position: absolute;
-      top: 30px;
+      top: 42px;
       right: 0;
       background: white;
       color: black;
       border: 1px solid #ccc;
       border-radius: 6px;
       display: none;
-      min-width: 160px;
+      min-width: 180px;
       z-index: 10;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
+
     .dropdown-list select {
       width: 100%;
       border: none;
       padding: 10px;
       border-radius: 6px;
+      outline: none;
     }
+
+    .call-menu-container {
+      position: relative;
+    }
+
+    .call-menu-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .call-menu-btn img {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+    }
+
+    .call-menu-dropdown {
+      position: absolute;
+      top: 40px;
+      right: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.16);
+      display: none;
+      min-width: 170px;
+      z-index: 20;
+      overflow: hidden;
+    }
+
+    .call-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px 14px;
+      border: none;
+      background: white;
+      cursor: pointer;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .call-option:hover {
+      background: #f3f3f3;
+    }
+
+    .call-option img {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
+
+    #chat-title {
+      background: #f0f2f5;
+      padding: 10px 16px;
+      border-bottom: 1px solid #ddd;
+      font-weight: bold;
+      color: #075e54;
+    }
+
     #chat-box {
       height: 50vh;
       overflow-y: auto;
@@ -68,35 +177,42 @@
       display: flex;
       flex-direction: column;
     }
+
     .message {
       max-width: 70%;
       padding: 10px 15px;
       border-radius: 10px;
       margin: 5px 10px;
       font-size: 15px;
+      word-wrap: break-word;
     }
+
     .sent {
       background-color: #dcf8c6;
       align-self: flex-end;
       text-align: right;
     }
+
     .received {
       background-color: #e5e5e5;
       align-self: flex-start;
       text-align: left;
     }
+
     .message b {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
       color: #555;
     }
+
     .input-area {
       display: flex;
       padding: 10px;
       gap: 10px;
       border-top: 1px solid #ddd;
     }
+
     input[type="text"] {
       flex: 1;
       padding: 10px;
@@ -104,7 +220,8 @@
       border-radius: 25px;
       font-size: 16px;
     }
-    button {
+
+    button.send-btn {
       background-color:#075e54;
       color: white;
       padding: 10px 20px;
@@ -112,11 +229,18 @@
       border-radius: 25px;
       cursor: pointer;
     }
+
     .logout {
       display: block;
       margin: 15px auto;
       background-color: #f44336;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
     }
+
     .logout:hover {
       background-color: #d32f2f;
     }
@@ -125,28 +249,53 @@
 <body>
   <div class="container">
     <div class="header">
-      <h2>Welcome, {{ username }}!</h2>
-      <div class="dropdown-container">
-        <button class="dropdown-btn" onclick="toggleDropdown()">
-          <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="User" style="width: 32px; height: 32px; border-radius: 50%;">
-        </button>
-        <div class="dropdown-list" id="userDropdown">
-          <select id="recipient" onchange="toggleDropdown()">
-            <option value="group" selected>Group Chat</option>
-            {% for user in users %}
-              <option value="{{ user }}">{{ user }}</option>
-            {% endfor %}
-          </select>
+      <div class="header-left">
+        <img class="logo" src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+        <div>
+          <h2>Welcome, {{ username }}!</h2>
+          <small>ChatConnect</small>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="call-menu-container">
+          <button class="call-menu-btn" onclick="toggleCallMenu()">
+            <img src="{{ url_for('static', filename='call_menu.png') }}" alt="Call Menu">
+          </button>
+          <div class="call-menu-dropdown" id="callMenuDropdown">
+            <button class="call-option" onclick="startAudioCall()">
+              <img src="{{ url_for('static', filename='audio.png') }}" alt="Audio">
+              <span>Audio Call</span>
+            </button>
+            <button class="call-option" onclick="startVideoCall()">
+              <img src="{{ url_for('static', filename='video.png') }}" alt="Video">
+              <span>Video Call</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="dropdown-container">
+          <button class="dropdown-btn" onclick="toggleDropdown()">
+            <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="User">
+          </button>
+          <div class="dropdown-list" id="userDropdown">
+            <select id="recipient">
+              <option value="group" selected>Group Chat</option>
+              {% for user in users %}
+                <option value="{{ user }}">{{ user }}</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
       </div>
     </div>
 
+    <div id="chat-title">Group Chat</div>
     <div id="chat-box"></div>
 
     <div class="input-area">
       <input type="text" id="message" placeholder="Type your message...">
-      <button onclick="sendMessage()">Send</button>
-
+      <button class="send-btn" onclick="sendMessage()">Send</button>
     </div>
 
     <a href="/logout"><button class="logout">Logout</button></a>
@@ -155,63 +304,130 @@
   <script id="history-data" type="application/json">
     {{ history | tojson }}
   </script>
+
   <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
   <script>
     const socket = io();
     const username = "{{ username }}";
-
     const messageHistory = JSON.parse(document.getElementById("history-data").textContent);
-    messageHistory.forEach(msg => {
-      appendMessage(msg, msg.user === username);
-    });
+
+    let currentChat = "group";
 
     function toggleDropdown() {
       const dropdown = document.getElementById("userDropdown");
       dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
     }
 
-    function sendMessage() {
-  const input = document.getElementById("message");
-  const recipient = document.getElementById("recipient").value;
-  const msg = input.value.trim();
-
-  if (msg) {
-    if (recipient === "group") {
-      socket.emit("message", { user: username, text: msg });
-      // ❌ Don't append immediately — wait for server response
-    } else {
-      socket.emit("private_message", { to: recipient, text: msg });
-      appendMessage({ user: username, to: recipient, text: msg }, true); // ✅ only for private messages
+    function toggleCallMenu() {
+      const menu = document.getElementById("callMenuDropdown");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
     }
-    input.value = "";
-  }
-}
 
-  
+    function updateChatTitle() {
+      const title = document.getElementById("chat-title");
+      title.textContent = currentChat === "group" ? "Group Chat" : `Chat with ${currentChat}`;
+    }
+
+    function isMessageForCurrentChat(msg) {
+      if (currentChat === "group") {
+        return msg.to === "group";
+      }
+
+      return (
+        (msg.user === username && msg.to === currentChat) ||
+        (msg.user === currentChat && msg.to === username)
+      );
+    }
+
+    function renderChat() {
+      const box = document.getElementById("chat-box");
+      box.innerHTML = "";
+
+      messageHistory
+        .filter(isMessageForCurrentChat)
+        .forEach(msg => appendMessage(msg, msg.user === username));
+    }
+
+    function switchChat() {
+      currentChat = document.getElementById("recipient").value;
+      document.getElementById("userDropdown").style.display = "none";
+      updateChatTitle();
+      renderChat();
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("message");
+      const msg = input.value.trim();
+
+      if (!msg) return;
+
+      if (currentChat === "group") {
+        socket.emit("message", { text: msg });
+      } else {
+        socket.emit("private_message", { to: currentChat, text: msg });
+      }
+
+      input.value = "";
+    }
 
     socket.on("message", function(data) {
-      appendMessage(data, data.user === username);
+      messageHistory.push(data);
+      if (isMessageForCurrentChat(data)) {
+        appendMessage(data, data.user === username);
+      }
     });
 
     socket.on("private_message", function(data) {
-      appendMessage(data, data.user === username);
+      messageHistory.push(data);
+      if (isMessageForCurrentChat(data)) {
+        appendMessage(data, data.user === username);
+      }
     });
 
     function appendMessage(data, isSender) {
       const box = document.getElementById("chat-box");
       const div = document.createElement("div");
       div.classList.add("message", isSender ? "sent" : "received");
-
-      const directLabel = (data.to && data.to !== "group")
-        ? `<small style="color:gray;">(direct message to ${data.to})</small><br>`
-        : (data.to && data.to !== "group")
-          ? `<small style="color:gray;">(direct message from ${data.user})</small><br>`
-          : "";
-
-      div.innerHTML = `<b>${data.user}</b><br>${directLabel}${data.text}`;
+      div.innerHTML = `<b>${data.user}</b><br>${data.text}`;
       box.appendChild(div);
       box.scrollTop = box.scrollHeight;
     }
+
+    function startAudioCall() {
+      if (currentChat === "group") {
+        alert("Please select a person first before starting an audio call.");
+        return;
+      }
+      alert("Audio call UI clicked for " + currentChat);
+      document.getElementById("callMenuDropdown").style.display = "none";
+    }
+
+    function startVideoCall() {
+      if (currentChat === "group") {
+        alert("Please select a person first before starting a video call.");
+        return;
+      }
+      alert("Video call UI clicked for " + currentChat);
+      document.getElementById("callMenuDropdown").style.display = "none";
+    }
+
+    document.getElementById("recipient").addEventListener("change", switchChat);
+
+    updateChatTitle();
+    renderChat();
+
+    window.onclick = function(event) {
+      const userDropdown = document.getElementById("userDropdown");
+      const callMenu = document.getElementById("callMenuDropdown");
+
+      if (!event.target.closest(".dropdown-container")) {
+        userDropdown.style.display = "none";
+      }
+
+      if (!event.target.closest(".call-menu-container")) {
+        callMenu.style.display = "none";
+      }
+    };
   </script>
 </body>
 </html>
